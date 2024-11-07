@@ -1,49 +1,50 @@
 import cv2
+import tkinter as tk
+from tkinter import messagebox, Label, Button
+import time
 import pytesseract
 from pytesseract import Output
+from PIL import Image, ImageTk
 
-# Optional: Specify the path to tesseract if needed
+# Optional: Specify the path to Tesseract if needed
 pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 
+# Global variable to store the path of the captured image
+image_path = "captured_image.jpg"
+
 def capture_image():
-    # Open a connection to the webcam
+    # Open the camera
     cap = cv2.VideoCapture(0)
     
-    # Check if the webcam is opened
+    # Check if the camera opened successfully
     if not cap.isOpened():
-        print("Cannot open camera")
-        return None
-
-    print("Press 's' to capture the image or 'q' to quit.")
-    while True:
-        # Capture frame-by-frame
-        ret, frame = cap.read()
+        messagebox.showerror("Error", "Could not open the camera.")
+    else:
+        # Allow the camera to warm up
+        time.sleep(2)  # 2-second delay to adjust the camera
         
-        # If frame read is successful
+        # Capture a frame
+        ret, frame = cap.read()
+
+        # Retry if the frame wasn't captured correctly
         if not ret:
-            print("Can't receive frame (stream end?). Exiting ...")
-            break
-
-        # Display the resulting frame
-        cv2.imshow('Webcam', frame)
-
-        # Wait for key press
-        key = cv2.waitKey(1)
-        if key == ord('s'):
-            # Save the captured frame as 'captured_image.jpg'
-            cv2.imwrite('captured_image.jpg', frame)
-            print("Image captured and saved as 'captured_image.jpg'")
-            break
-        elif key == ord('q'):
-            print("Exiting without capturing image.")
-            break
-
-    # Release the camera and close windows
-    cap.release()
-    cv2.destroyAllWindows()
-    return 'captured_image.jpg'
+            messagebox.showerror("Error", "Failed to capture image.")
+            cap.release()
+            return
+        
+        # Save the frame as an image
+        cv2.imwrite(image_path, frame)
+        messagebox.showinfo("Image Captured", f"Image saved at {image_path}")
+        
+        # Release the camera and close any OpenCV windows
+        cap.release()
+        cv2.destroyAllWindows()
+        
+        # After capturing, run OCR on the image
+        extract_text_from_image(image_path)
 
 def extract_text_from_image(image_path):
+    """Extract text from the captured image using Tesseract OCR"""
     # Read the image from file
     image = cv2.imread(image_path)
 
@@ -53,16 +54,25 @@ def extract_text_from_image(image_path):
     # Apply OCR to extract text
     text = pytesseract.image_to_string(gray_image, output_type=Output.STRING)
     
+    # Display the extracted text in the Tkinter window
     print("Extracted Text:")
     print(text)
-    return text
+    result_label.config(text="Extracted Text:\n" + text)
 
-# Capture image from webcam
-image_path = capture_image()
+# Create a Tkinter window
+window = tk.Tk()
+window.title("Image Capture and OCR")
 
-# If an image was captured, run OCR
-if image_path:
-    extract_text_from_image(image_path)
+# Set window size
+window.geometry("400x300")
 
-capture_image()
-extract_text_from_image()
+# Create a button to capture image
+capture_button = Button(window, text="Capture Image", command=capture_image)
+capture_button.pack(pady=20)
+
+# Label to display the extracted text
+result_label = Label(window, text="", wraplength=350, justify="left")
+result_label.pack(pady=10)
+
+# Run the Tkinter main loop
+window.mainloop()
