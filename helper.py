@@ -5,6 +5,25 @@ from PIL import Image, ImageTk
 from pytesseract import Output
 from tkinter import messagebox
 import base64
+import requests
+
+# Pushover Notifications:
+user_key = 'uawsye8i54ni9tvcwtfimvx12nvchw'
+api_token = 'ag14g5b31qqj5jqy2718uwf59mgqyq'
+
+def send_pushover_notification(user_key, api_token, message):
+    url = 'https://api.pushover.net/1/messages.json'
+    payload = {
+        'token': api_token,
+        'user': user_key,
+        'message': message
+    }
+    response = requests.post(url, data=payload)
+    if response.status_code == 200:
+        print("Notification sent successfully!")
+    else:
+        print("Failed to send notification")
+    return response.text
 
 # Specify the path to Tesseract if needed
 pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
@@ -56,6 +75,9 @@ def extract_text_from_image(image_path, result_label):
 
     # Apply Tesseract OCR to extract text
     text = pytesseract.image_to_string(gray_image, output_type=Output.STRING)
+
+    # Send the extracted text as a notification
+    send_pushover_notification(user_key, api_token, text)
 
     # Update the Tkinter label to display the extracted text
     print(text)
