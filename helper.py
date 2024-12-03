@@ -120,10 +120,29 @@ def describe_image(image_path, result_label, client):
     except Exception as e:
         messagebox.showerror("Error", f"Failed to describe image. Error: {str(e)}")
 
-#Continuously updates the video preview by capturing frames from the webcam.
+# #Continuously updates the video preview by capturing frames from the webcam.
+# def update_video_preview(video_label):
+#     ret, frame = cap.read()
+#     if ret:
+#         # Convert the frame to RGB format (OpenCV uses BGR)
+#         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+#         # Convert the frame to a PIL image, then to a Tkinter image
+#         img = Image.fromarray(frame)
+#         imgtk = ImageTk.PhotoImage(image=img)
+
+#         # Update the label with the new image
+#         video_label.imgtk = imgtk
+#         video_label.configure(image=imgtk)
+    
+#     # Schedule the next frame update
+#     video_label.after(10, update_video_preview, video_label)
 def update_video_preview(video_label):
     ret, frame = cap.read()
     if ret:
+        # Resize the frame to match the Label widget's dimensions
+        frame = cv2.resize(frame, (video_label.winfo_width(), video_label.winfo_height()))
+
         # Convert the frame to RGB format (OpenCV uses BGR)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
